@@ -81,9 +81,9 @@ let isAndroid = /android/i.test(r) && !s;
         $amount1.on('keyup keydown', function(e){
             let pressedKey = e.key;
             let eventType = e.type;
+            let value = $(this).val();
 
             if(eventType === 'keydown'){
-                let value = $(this).val();
                 oriValLen = value.length;
                 cursorPosStart = $(this)[0].selectionStart;
                 cursorPos = oriValLen - cursorPosStart;
@@ -101,7 +101,6 @@ let isAndroid = /android/i.test(r) && !s;
                 if ([1, 2].includes(cursorPos)){
                     return false;
                 }
-                let value = $(this).val();
                 value = addCharAt(value, cursorPosStart, pressedKey);
                 makeCurrencyFormat.call(this, value);
 
