@@ -130,15 +130,7 @@ function makeAmountField($amountField = null){
                     // Prevent delete partial selected value
                     return false;
                 }
-                if(allowDigit.includes(pressedKey)){
-                    // For remove cursor blink from laptop browser
-                    return false;
-                }
 
-                if(allowKey.includes(pressedKey) === false){
-                    // Don't allow any key without `allowKey`
-                    return false;
-                }
 
                 if(cursorPosStart){
                     /// To delete previous value of comma
@@ -147,6 +139,16 @@ function makeAmountField($amountField = null){
                     if(prevChar === ','){
                         cursorPosStart--;
                     }
+                }
+
+                if(allowDigit.includes(pressedKey)){
+                    // For remove cursor blink from laptop browser
+                    return false;
+                }
+
+                if(allowKey.includes(pressedKey) === false){
+                    // Don't allow any key without `allowKey`
+                    return false;
                 }
             }
             if(eventType === 'keyup'){
