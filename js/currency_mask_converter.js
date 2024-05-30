@@ -163,7 +163,7 @@ let isAndroid = /android/i.test(r) && !s;
                 // Add `.` (.) at postion 2 from last digit
                 value = addCharAt(value, addIndex, '.');
                 if(value.length === 4){
-                    // replce first digit by `0`
+                    // replace first digit by `0`
                     value = replaceCharAt(value, removeIndex, '0');
                 }
                 else{
