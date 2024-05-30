@@ -95,7 +95,7 @@ function makeCurrencyFormat(value){
     let cursorPosEnd = null;
     let cursorPos = null;
 
-    $amount1.on('keyup keydown', function(e){
+    $(document).on('keyup keydown', 'input[type=amount]', function(e){
         let pressedKey = e.key;
         let eventType = e.type;
         let value = $(this).val();
