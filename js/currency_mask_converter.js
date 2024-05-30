@@ -156,30 +156,27 @@ let isAndroid = /android/i.test(r) && !s;
 
             let cntDot = countDot(keyUpValue);
 
-            if([2, 3].includes(cursorPos)){
-                if(cntDot === 0){
-                    /// If comma delete
-                    let addIndex = cursorPosStart-1;
-                    let removeIndex = cursorPosStart - 2;
-                    let newCurPos = cursorPosStart - 1;
-                    // Add comma at postion 2 from last digit
-                    value = addCharAt(value, addIndex, '.');
-                    if(value.length === 4){
-                        // replce first digit by `0`
-                        value = replaceCharAt(value, removeIndex, '0');
-                    }
-                    else{
-                        // remove first digit
-                        value = removeCharAt(value, removeIndex);
-                        newCurPos = cursorPosStart - 2;
-                    }
-                    
-                    // Update field by new updated value
-                    makeCurrencyFormat.call(this, value);
-                    // Move cursor to the after `.` position
-                    focusCursorPosition.call(this, newCurPos);
-                    return false;
+            if(cursorPos === 2 && cntDot === 0){
+                /// If `.` (dot) delete
+                let addIndex = cursorPosStart-1;
+                let removeIndex = cursorPosStart - 2;
+                // Add `.` (.) at postion 2 from last digit
+                value = addCharAt(value, addIndex, '.');
+                if(value.length === 4){
+                    // replce first digit by `0`
+                    value = replaceCharAt(value, removeIndex, '0');
                 }
+                else{
+                    // remove first digit
+                    value = removeCharAt(value, removeIndex);
+                }
+                
+                // Update field by new updated value
+                makeCurrencyFormat.call(this, value);
+                let newCurPos = value.length - 3;
+                // Move cursor to the after `.` position
+                focusCursorPosition.call(this, newCurPos);
+                return false;
             }
 
             if(cntDot > 1 && oriValue !== keyUpValue){
@@ -195,6 +192,7 @@ let isAndroid = /android/i.test(r) && !s;
                 /// Action for decimal part value (after `.`)
                 let newCurPos = cursorPosStart;
                 if(oriValueLen > keyUpValueLen){
+                    // If digit deleted then replace the previous cursor position value by `0`
                     value = replaceCharAt(oriValue, cursorPosStart-1, '0');
                     newCurPos = cursorPosStart - 1;
                 }
@@ -207,6 +205,12 @@ let isAndroid = /android/i.test(r) && !s;
                 if((newCurPos !== cursorPosStart) || (value !== keyUpValue)){
                     // Move cursor to the next index
                     focusCursorPosition.call(this, newCurPos);
+                }
+                if(keyUpValueLen < 4){
+                    // If delete all digit from cursor start point 
+                    let newValue = value ? `0.0${value}` : '0.00';
+                    $(this).val(newValue);
+                    focusCursorPosition.call(this, 0);
                 }
             }
             else{
