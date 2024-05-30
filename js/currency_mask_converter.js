@@ -109,9 +109,12 @@ function makeAmountField($amountField = null){
             let value = $(this).val();
             value = value.replace(/[^0-9.,]/g, '');
             let integerValue = value.replace(/[^0-9.]/g, '').split('.')[0];
+            let currentCurPos = $(this)[0].selectionStart;
 
-            if((integerValue.length>11)
-                && allowDigit.includes(pressedKey)){
+            if((integerValue.length>11) && 
+            allowDigit.includes(pressedKey) && 
+            currentCurPos < 16){
+                    console.log("StartCur::: ", currentCurPos)
                 return false;
             }
             if (eventType === 'paste'){
