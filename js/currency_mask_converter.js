@@ -94,38 +94,50 @@ function makeAmountField($amountField = null){
         }
 
         let allowDigit = [...'0123456789'];
-        let allowKey = ['Backspace', 'ArrowLeft', 'ArrowRight', '.'];
+        let allowKey = ['Backspace', 'ArrowLeft', 'ArrowRight', 'Control', '.'];
 
         let oriValue = null;
         let oriValueLen = null;
         let cursorPosStart = null;
         let cursorPosEnd = null;
         let cursorPos = null;
+        let keyPressCount = 0;
 
-        $field.on('keyup keydown paste', function(e){
-            e.stopImmediatePropagation();
+        $field.on('keyup keydown paste cut', function(e){
             let pressedKey = e.key;
             let eventType = e.type;
             let value = $(this).val();
             value = value.replace(/[^0-9.,]/g, '');
             let integerValue = value.replace(/[^0-9.]/g, '').split('.')[0];
             let currentCurPos = $(this)[0].selectionStart;
-
-            if((integerValue.length>11) && 
-            allowDigit.includes(pressedKey) && 
-            currentCurPos < 16){
-                    console.log("StartCur::: ", currentCurPos)
+            
+            if((integerValue.length>11) &&
+                allowDigit.includes(pressedKey) &&
+                currentCurPos < 16){
                 return false;
             }
-            if (eventType === 'paste'){
+            if (['paste', 'cut'].includes(eventType)){
                 return false;
             }
             if(eventType === 'keydown'){
+                let isCopy = ((e.ctrlKey || e.metaKey) && pressedKey.toLowerCase() === 'c');
+                let isAllSelect = ((e.ctrlKey || e.metaKey) && pressedKey.toLowerCase() === 'a');
+                if(isCopy || isAllSelect){
+                    // Allow `Ctrl + C` and `Ctrl + A`
+                    return true;
+                }
+                keyPressCount++;
+                if (keyPressCount > 1){
+                    // For stop long press
+                    return false;
+                }
                 oriValue = value;
                 oriValueLen = value.length;
                 cursorPosStart = $(this)[0].selectionStart;
                 cursorPosEnd = $(this)[0].selectionEnd;
                 cursorPos = oriValueLen - cursorPosStart;
+
+                
 
                 let partialSelection = ((cursorPosEnd - cursorPosStart) > 1) && (cursorPosStart !== 0 && cursorPosEnd !== oriValueLen);
 
@@ -133,17 +145,6 @@ function makeAmountField($amountField = null){
                     // Prevent delete partial selected value
                     return false;
                 }
-
-
-                if(cursorPosStart){
-                    /// To delete previous value of comma
-                    let prevCurPos = cursorPosStart-1;
-                    let prevChar = value[prevCurPos];
-                    if(prevChar === ','){
-                        cursorPosStart--;
-                    }
-                }
-
                 if(allowDigit.includes(pressedKey)){
                     // For remove cursor blink from laptop browser
                     return false;
@@ -153,9 +154,20 @@ function makeAmountField($amountField = null){
                     // Don't allow any key without `allowKey`
                     return false;
                 }
+
+                if(cursorPosStart){
+                    /// To delete previous value of comma
+                    let prevCurPos = cursorPosStart-1;
+                    let prevChar = value[prevCurPos];
+                    if(prevChar === ','){
+                        cursorPosStart--;
+                    }
+                }
             }
             if(eventType === 'keyup'){
+                keyPressCount = 0;
                 let keyUpValue = $(this).val();
+                
                 let keyUpValueLen = keyUpValue.length;
 
                 let cntDot = countDot(keyUpValue);
@@ -185,10 +197,14 @@ function makeAmountField($amountField = null){
 
                 if(cntDot > 1 && oriValue !== keyUpValue){
                     // If press `.`, then cursor move to at index 2 from last
-                    $(this).val(oriValue);
+                    oriValue = oriValue.replaceAll('.', '');
+                    oriValueLen = oriValue.length;
                     let dotPosition = oriValueLen - 2;
+                    oriValue = addCharAt(oriValue, dotPosition, '.');
+                    $(this).val(oriValue);
+
                     // Move cursor to the `.` position
-                    focusCursorPosition.call(this, dotPosition);
+                    focusCursorPosition.call(this, dotPosition+1);
                     return false;
                 }
 
@@ -231,7 +247,7 @@ function makeAmountField($amountField = null){
                 else{
                     // Action for integer part value (before `.`)
                     if(allowDigit.includes(pressedKey)){
-                        if (cursorPosStart === 0 && oriValueLen === 4){
+                        if (cursorPosStart === 0 && oriValueLen === 4 && oriValue[0] === '0'){
                             /// Replace first digit by pressed digit for one integer value
                             value = replaceCharAt(value, 0, pressedKey);
                             cursorPosStart++;
