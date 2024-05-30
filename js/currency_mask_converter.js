@@ -1,11 +1,11 @@
 function replaceCharAt(str, index, newChar) {
+    // Replace character at the specific index
     if (index >= str.length) {
         return str; // If index is out of bounds, return original string
     }
     let firstPart = str.substring(0, index);
     let lastPart = str.substring(index + 1);
-    let newStr = `${firstPart}${newChar}${lastPart}`
-    return newStr;
+    return `${firstPart}${newChar}${lastPart}`;
 }
 
 function addCharAt(str, index, char) {
@@ -15,8 +15,7 @@ function addCharAt(str, index, char) {
     }
     let firstPart = str.substring(0, index);
     let lastPart = str.substring(index);
-    let newStr = `${firstPart}${char}${lastPart}`
-    return newStr;
+    return `${firstPart}${char}${lastPart}`;
 }
 
 function removeCharAt(str, index) {
@@ -26,12 +25,11 @@ function removeCharAt(str, index) {
     }
     let firstPart = str.substring(0, index);
     let lastPart = str.substring(index+1);
-    let newStr = `${firstPart}${lastPart}`
-    return newStr;
+    return `${firstPart}${lastPart}`;
 }
 
 function focusCursorPosition(cursorPos){
-    // Focus cursor at the given cursor postion at input field
+    // Focus cursor at the given cursor position at input field
     let $this = $(this)[0];
     $this.selectionStart = cursorPos;
     $this.selectionEnd = cursorPos;
@@ -48,7 +46,7 @@ function countDot(str) {
     return cnt;
 }
 
-function isRemovedComma(str1, str2){
+function isCommaRemoved(str1, str2){
     let cnt1 = 0;
     let cnt2 = 0;
     for(let char of str1){
@@ -65,7 +63,7 @@ function isRemovedComma(str1, str2){
 }
 
 function makeCurrencyFormat(value){
-    /// Make the value into thousand currency format
+    /// Make the value into a thousand currency format
     let input = $(this);
     value = value.replace(/,/g, ''); // Remove existing commas
 
@@ -79,14 +77,6 @@ function makeCurrencyFormat(value){
         input.val('0.00');
     }
 }
-
-let r = navigator.userAgent;
-let o = /mobile/i.test(r);
-let s = /iemobile/i.test(r);
-let isIphone = /iphone/i.test(r) && !s;
-let isAndroid = /android/i.test(r) && !s;
-// alert(`r = ${r}, mobile = ${o}, iemobile = ${s}, iPhone = ${isIphone}, android = ${isAndroid}`);
-
 
 (function(){
     let $amount1 = $('input[type=amount]');
@@ -110,9 +100,9 @@ let isAndroid = /android/i.test(r) && !s;
         let eventType = e.type;
         let value = $(this).val();
         value = value.replace(/[^0-9.,]/g, '');
-        let intergerValue = value.replace(/[^0-9.]/g, '').split('.')[0];
+        let integerValue = value.replace(/[^0-9.]/g, '').split('.')[0];
 
-        if((intergerValue.length>11) 
+        if((integerValue.length>11)
             && allowDigit.includes(pressedKey)){
             return false;
         }
@@ -122,7 +112,6 @@ let isAndroid = /android/i.test(r) && !s;
         }
 
         if(eventType === 'keydown'){
-            console.log("KEYDOWN_VAL::: ", value);
             oriValue = value;
             oriValueLen = value.length;
             cursorPosStart = $(this)[0].selectionStart;
@@ -141,7 +130,7 @@ let isAndroid = /android/i.test(r) && !s;
             }
 
             if(cursorPosStart){
-                /// To delete prevous value of comma
+                /// To delete previous value of comma
                 let prevCurPos = cursorPosStart-1;
                 let prevChar = value[prevCurPos];
                 if(prevChar === ','){
@@ -152,7 +141,6 @@ let isAndroid = /android/i.test(r) && !s;
         if(eventType === 'keyup'){
             let keyUpValue = $(this).val();
             let keyUpValueLen = keyUpValue.length;
-            console.log("KEYUP_THIS_VAL::: ", keyUpValue);
 
             let cntDot = countDot(keyUpValue);
 
@@ -160,7 +148,7 @@ let isAndroid = /android/i.test(r) && !s;
                 /// If `.` (dot) delete
                 let addIndex = cursorPosStart-1;
                 let removeIndex = cursorPosStart - 2;
-                // Add `.` (.) at postion 2 from last digit
+                // Add `.` (.) at position 2 from last digit
                 value = addCharAt(value, addIndex, '.');
                 if(value.length === 4){
                     // replace first digit by `0`
@@ -197,24 +185,35 @@ let isAndroid = /android/i.test(r) && !s;
                     newCurPos = cursorPosStart - 1;
                 }
                 if(allowDigit.includes(pressedKey) && cursorPos !== 0){
-                    // Replace digit by presskey of current place
+                    // Replace digit by pressed key of current place
                     newCurPos = cursorPosStart + 1;
                     value = replaceCharAt(value, cursorPosStart, pressedKey);
                 }
                 $(this).val(value);
+                let valueLen = value.length;
                 if((newCurPos !== cursorPosStart) || (value !== keyUpValue)){
                     // Move cursor to the next index
                     focusCursorPosition.call(this, newCurPos);
                 }
-                if(keyUpValueLen < 4){
-                    // If delete all digit from cursor start point 
-                    let newValue = value ? `0.0${value}` : '0.00';
+                if(valueLen < 4){
+                    // If delete all digit from cursor start point
+                    let newValue = '0.00';
+                    let newCurPos = 0;
+                    if(cursorPos === 1){
+                        newValue = `0.0${value[valueLen-1]}`;
+                        newCurPos = 3;
+                    }
+                    if (cursorPos === 2){
+                        newValue = `0.${value[valueLen-2]}${value[valueLen-1]}`;
+                        newCurPos = 2;
+                    }
+
                     $(this).val(newValue);
-                    focusCursorPosition.call(this, 0);
+                    focusCursorPosition.call(this, newCurPos);
                 }
             }
             else{
-                // Action for integer part value (befor `.`)
+                // Action for integer part value (before `.`)
                 if(allowDigit.includes(pressedKey)){
                     if (cursorPosStart === 0 && oriValueLen === 4){
                         /// Replace first digit by pressed digit for one integer value
@@ -226,9 +225,9 @@ let isAndroid = /android/i.test(r) && !s;
                         value = addCharAt(value, cursorPosStart, pressedKey);
                     }
                 }
-                // Get comma is delete or not
-                let isRemComma = isRemovedComma(oriValue, keyUpValue);
-                if(isRemComma){
+                // Get comma is deleted or not
+                let isCommaRem = isCommaRemoved(oriValue, keyUpValue);
+                if(isCommaRem){
                     // If back button pressed from comma index,
                     // then removed the previous digit of comma
                     value = removeCharAt(keyUpValue, cursorPosStart-1);
@@ -244,7 +243,6 @@ let isAndroid = /android/i.test(r) && !s;
                 cursorPosStart = cursorPosStart + addLen;
                 cursorPosStart = cursorPosStart < 0 ? 0 : cursorPosStart;
 
-                console.log("HERE_CURSOR::: ", cursorPosStart, newValue, oriValue, keyUpValue, (newValue === keyUpValue) ,(newValue === oriValue))
                 if(((newValue !== oriValue) || (newValue !== keyUpValue))){
                     /// If input field value changed then move the cursor accordingly
                     focusCursorPosition.call(this, cursorPosStart);
@@ -253,4 +251,3 @@ let isAndroid = /android/i.test(r) && !s;
         }
     })
 }());
-
