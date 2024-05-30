@@ -41,7 +41,7 @@ function makeCurrencyFormat(value){
         // Parse the value as a float and format with two decimal places
         let numberValue = value * 1;
         let formattedValue = numberValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        console.log("FORMTVAL::: ", formattedValue);
+        // console.log("FORMTVAL::: ", formattedValue);
         input.val(formattedValue);
     }
     else{
@@ -58,8 +58,6 @@ let isAndroid = /android/i.test(r) && !s;
 
 
 (function(){
-    // let $amount = $('input[type=amount]');
-
     let $amount1 = $('input[type=amount]');
     let $amount2 = $('#amount_2');
     $amount1.css({'text-align': 'right'})
@@ -74,47 +72,70 @@ let isAndroid = /android/i.test(r) && !s;
         });
 
         let oriValue = null;
-        let oriValLen = null;
+        let oriValueLen = null;
         let cursorPosStart = null;
         let cursorPos = null;
 
-        $amount1.on('keyup keydown', function(e){
+        $amount1.on('keyup keydown input', function(e){
             let pressedKey = e.key;
             let eventType = e.type;
             let value = $(this).val();
+            value = value.replace(/[^0-9.,]/g, '');
 
             if(eventType === 'keydown'){
-                oriValLen = value.length;
+                console.log("KEYDOWN_VAL::: ", value);
+                oriValue = value;
+                oriValueLen = value.length;
                 cursorPosStart = $(this)[0].selectionStart;
-                cursorPos = oriValLen - cursorPosStart;
-                if ([1, 2].includes(cursorPos)){
-                    if(pressedKey === undefined){
-                        return false;
-                    }
-                    value = replaceCharAt(value, cursorPosStart, pressedKey);
-                    $(this).val(value);
-                    focusCursorPosition.call(this, cursorPosStart+1);
-                }
+                cursorPos = oriValueLen - cursorPosStart;
                 return false;
             }
-            else{
-                if ([1, 2].includes(cursorPos)){
-                    return false;
-                }
-                value = addCharAt(value, cursorPosStart, pressedKey);
-                makeCurrencyFormat.call(this, value);
+            if(eventType === 'keyup'){
+                let keyUpValue = $(this).val();
+                console.log("KEYUP_THIS_VAL::: ", keyUpValue);
 
-                value = $(this).val();
+                // if keyUpVal < oriValue, it means value delete
+                // Need to code for this
                 
-                let newValLen = value.length;
-                let addLen = newValLen - oriValLen;
-                console.log("NEW_VAL::: ", addLen, newValLen, oriValLen)
-                cursorPosStart = cursorPosStart + addLen;
-
-                if(addLen){
-                    focusCursorPosition.call(this, cursorPosStart);
+                
+                
+                if ([0, 1, 2].includes(cursorPos)){
+                    /// after `.` value
+                    let newCurPos = cursorPosStart;
+                    if([...'0123456789'].includes(pressedKey) && cursorPos !== 0){
+                        newCurPos = cursorPosStart + 1;
+                        value = replaceCharAt(value, cursorPosStart, pressedKey);
+                    }
+                    
+                    $(this).val(value);
+                    focusCursorPosition.call(this, newCurPos);
                 }
-                return false;
+                else{
+                    if([...'0123456789'].includes(pressedKey)){
+                        if (cursorPosStart === 0 && oriValueLen === 4){
+                            value = replaceCharAt(value, 0, pressedKey);
+                            cursorPosStart++;
+                        }
+                        else{
+                            value = addCharAt(value, cursorPosStart, pressedKey);
+                        }
+                    }
+                    // console.log("KEYUP_VAL::: ", value);
+                    makeCurrencyFormat.call(this, value);
+
+                    let newValue = $(this).val();
+                    
+                    let newValueLen = newValue.length;
+                    let addLen = newValueLen - oriValueLen;
+                    // console.log("NEW_VAL::: ", addLen, newValLen, oriValueLen)
+                    cursorPosStart = cursorPosStart + addLen;
+                    // alert(`${pressedKey}: ${typeof pressedKey}`)
+
+                    if(newValue !== oriValue || addLen || pressedKey === 'Unidentified'){
+                        // `Unidentified` check for android mobile
+                        focusCursorPosition.call(this, cursorPosStart);
+                    }
+                }
             }
         })
     }
@@ -275,3 +296,10 @@ let isAndroid = /android/i.test(r) && !s;
         console.log("Amount2", $amount2.val())
     }
 }());
+
+(function(){
+    $("#amount_2").keydown(function(event){
+        alert("Key down: " + event.charCode);
+    });
+}());
+
