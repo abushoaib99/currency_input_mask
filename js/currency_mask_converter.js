@@ -81,7 +81,7 @@ function makeCurrencyFormat(value){
 (function(){
     let $amount1 = $('input[type=amount]');
     $amount1.css({'text-align': 'right'})
-    $amount1.val("0.00");
+    $amount1.val("0.00"); // Initial value
     let allowDigit = [...'0123456789'];
 
     $amount1.on('click', function(e){
@@ -251,3 +251,4 @@ function makeCurrencyFormat(value){
         }
     })
 }());
+
