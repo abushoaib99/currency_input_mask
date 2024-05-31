@@ -75,7 +75,7 @@ function makeCurrencyFormat(value) {
     let numberValue = value * 1;
     let formattedValue = numberValue
       .toFixed(2)
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ","); // make the currencty thousand separeted format
     input.val(formattedValue);
   } else {
     input.val("0.00");
@@ -86,6 +86,76 @@ function makeAmountField($amountField = null) {
   if ($amountField === null) {
     return;
   }
+
+  let handleComputerKey = function (
+    value,
+    pressedKey,
+    cursorPosStart,
+    cursorPosEnd,
+    cursorPos
+  ) {
+    let valueLen = value.length;
+    let dotPosition = valueLen - 2;
+    if (pressedKey === ".") {
+      /// Handle `.` (it's not working in adroid phone)
+      focusCursorPosition.call(this, dotPosition);
+      return false;
+    }
+
+    if (pressedKey === "Backspace") {
+      /// Handle delete `.` (it's not working in adroid phone)
+      let isAllSelect = cursorPosStart === 0 && cursorPosEnd === valueLen;
+      if (isAllSelect) {
+        $(this).val("0.00");
+        focusCursorPosition.call(this, 0);
+        return false;
+      }
+      if (cursorPos === 2) {
+        // Cursor at before `.` position
+        let removeIndex = cursorPosStart - 2;
+        if (valueLen === 4) {
+          // replace first digit by `0`
+          value = replaceCharAt(value, 0, "0");
+        } else {
+          // remove first digit
+          value = removeCharAt(value, removeIndex);
+        }
+        makeCurrencyFormat.call(this, value);
+        value = $(this).val();
+        let newCurPos = value.length - 3;
+        focusCursorPosition.call(this, newCurPos);
+        return false;
+      }
+      if ([0, 1].includes(cursorPos)) {
+        // Cursor at after `.` positon (decimal point)
+        value = replaceCharAt(value, cursorPosStart - 1, "0");
+        $(this).val(value);
+        focusCursorPosition.call(this, cursorPosStart - 1);
+      } else {
+        if (cursorPosStart === 0) {
+          return false;
+        }
+        let prevCurPos = cursorPosStart - 1;
+        let prevChar = value[prevCurPos];
+        let commaRemoved = 0;
+        if (prevChar === ",") {
+          /// To delete previous value of comma
+          prevCurPos--;
+          commaRemoved = 1;
+        }
+        value = removeCharAt(value, prevCurPos);
+        makeCurrencyFormat.call(this, value);
+        let newValue = $(this).val();
+        let newValueLen = newValue.length;
+        let addLen = newValueLen - valueLen;
+        cursorPosStart = cursorPosStart + addLen - commaRemoved;
+        cursorPosStart = cursorPosStart < 0 ? 0 : cursorPosStart;
+        focusCursorPosition.call(this, cursorPosStart);
+      }
+      return false;
+    }
+  };
+
   $amountField.each((index, element) => {
     let $field = $(element);
     $field.css({ "text-align": "right" });
@@ -110,16 +180,18 @@ function makeAmountField($amountField = null) {
       let value = $(this).val();
       value = value.replace(/[^0-9.,]/g, "");
       let integerValue = value.replace(/[^0-9.]/g, "").split(".")[0];
-      let currentCurPos = $(this)[0].selectionStart;
+      let selectionStart = $(this)[0].selectionStart;
 
       if (
         integerValue.length > 11 &&
         allowDigit.includes(pressedKey) &&
-        currentCurPos < 16
+        selectionStart < 16
       ) {
+        /// Allow only `12` digit integer part (before `.`)
         return false;
       }
-      if (eventType === "paste") {
+      if (["paste", "cut"].includes(eventType)) {
+        // Prevent `paste` , `cut`
         return false;
       }
       if (eventType === "keydown") {
@@ -161,23 +233,31 @@ function makeAmountField($amountField = null) {
           return false;
         }
 
-        if (cursorPosStart) {
-          /// To delete previous value of comma
-          let prevCurPos = cursorPosStart - 1;
-          let prevChar = value[prevCurPos];
-          if (prevChar === ",") {
-            cursorPosStart--;
-          }
+        if ([".", "Backspace"].includes(pressedKey)) {
+          /// Handle `.` and `Backspace` for computer keyboard (it's not working in `adroid` phone)
+          return handleComputerKey.call(
+            this,
+            value,
+            pressedKey,
+            cursorPosStart,
+            cursorPosEnd,
+            cursorPos
+          );
         }
       }
       if (eventType === "keyup") {
         keyPressCount = 0;
         let keyUpValue = $(this).val();
         let keyUpValueLen = keyUpValue.length;
+        if (pressedKey === "Backspace") {
+          /// it's not working in adroid phone
+          return false;
+        }
 
         let cntDot = countDot(keyUpValue);
 
         if (cursorPos === 2 && cntDot === 0) {
+          /// This is for `android`
           /// If `.` (dot) delete
           let addIndex = cursorPosStart - 1;
           let removeIndex = cursorPosStart - 2;
@@ -185,7 +265,7 @@ function makeAmountField($amountField = null) {
           value = addCharAt(value, addIndex, ".");
           if (value.length === 4) {
             // replace first digit by `0`
-            value = replaceCharAt(value, removeIndex, "0");
+            value = replaceCharAt(value, 0, "0");
           } else {
             // remove first digit
             value = removeCharAt(value, removeIndex);
@@ -193,6 +273,7 @@ function makeAmountField($amountField = null) {
 
           // Update field by new updated value
           makeCurrencyFormat.call(this, value);
+          value = $(this).val();
           let newCurPos = value.length - 3;
           // Move cursor to the after `.` position
           focusCursorPosition.call(this, newCurPos);
@@ -268,7 +349,8 @@ function makeAmountField($amountField = null) {
           if (isCommaRem) {
             // If back button pressed from comma index,
             // then removed the previous digit of comma
-            value = removeCharAt(keyUpValue, cursorPosStart - 1);
+            value = removeCharAt(keyUpValue, cursorPosStart - 2);
+            cursorPosStart--;
           }
 
           /// Update the input field by new value
