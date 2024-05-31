@@ -46,23 +46,23 @@ function countDot(str) {
   return cnt;
 }
 
-function isCommaRemoved(str1, str2) {
+function isCommaRemoved(keyDownValue, keyUpValue) {
   let cnt1 = 0;
   let cnt2 = 0;
-  if (!str1 || !str2) {
+  if (!keyDownValue || !keyUpValue) {
     return;
   }
-  for (let char of str1) {
+  for (let char of keyDownValue) {
     if (char === ",") {
       cnt1++;
     }
   }
-  for (let char of str2) {
+  for (let char of keyUpValue) {
     if (char === ",") {
       cnt2++;
     }
   }
-  return cnt1 !== cnt2;
+  return cnt1 > cnt2;
 }
 
 function makeCurrencyFormat(value) {
@@ -181,6 +181,7 @@ function makeAmountField($amountField = null) {
       value = value.replace(/[^0-9.,]/g, "");
       let integerValue = value.replace(/[^0-9.]/g, "").split(".")[0];
       let selectionStart = $(this)[0].selectionStart;
+      let selectionEnd = $(this)[0].selectionEnd;
 
       if (
         integerValue.length > 11 &&
@@ -210,8 +211,8 @@ function makeAmountField($amountField = null) {
         }
         oriValue = value;
         oriValueLen = value.length;
-        cursorPosStart = $(this)[0].selectionStart;
-        cursorPosEnd = $(this)[0].selectionEnd;
+        cursorPosStart = selectionStart;
+        cursorPosEnd = selectionEnd;
         cursorPos = oriValueLen - cursorPosStart;
 
         let partialSelection =
@@ -306,7 +307,9 @@ function makeAmountField($amountField = null) {
             newCurPos = cursorPosStart + 1;
             value = replaceCharAt(value, cursorPosStart, pressedKey);
           }
-          $(this).val(value);
+          
+          makeCurrencyFormat.call(this, value);
+          value = $(this).val();
           let valueLen = value.length;
           if (newCurPos !== cursorPosStart || value !== keyUpValue) {
             // Move cursor to the next index
